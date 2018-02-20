@@ -11,26 +11,44 @@ $serial_paritycheck = 0
 $serial_delimiter = "\r\n"
 
 sp = SerialPort.new($serial_port, $serial_baudrate, $serial_databit, $serial_stopbit, $serial_paritycheck)
-sp.read_timeout=1000 
+sp.read_timeout=5000 
 
 FileUtils.makedirs("./relay_log")
 filename = "./relay_log/" + Time.now().strftime("%Y%m%d-%H%M%S") + ".txt" 
 file = File.open(filename, 'a')
 
-received = false
+received = nil 
+
 while true
   incoming = sp.gets($serial_delimiter)
   if incoming
     p incoming
     file.puts(incoming)
     if received
+      panid = received[:panid]
+      srcid = received[:srcid]
+      dstid = received[:dstid]
       matched = incoming.match(/RSSI\(\-(?<rssi>\d+)dBm\)\:Receive Data\((?<payload>.*)\)\r\n/)
-      if matched
-        puts("received payload: " + matched[:payload]) 
-        sp.write(matched[:payload] + $serial_delimiter) 
+      if matched && srcid.hex > dstid.hex
+        nextid = format("%04X", [dstid.hex - 1, 0].max) 
+        rssi = matched[:rssi]
+        payload = matched[:payload]
+        
+        puts("received payload: " + payload)
+        sp.write(panid + nextid + payload + $serial_delimiter) 
+        if srcid == payload[0..3] # srcid == origin
+          response = sp.gets($serial_selimiter)
+          if response 
+            p response
+            file.puts(response)
+            if response.include?("<-- send data info[panid = #{panid}, srcid = #{dstid}, dstid = #{nextid}, length = ")
+              sp.write(panid + srcid + "ACK:-" + matched[:rssi] + "dBm" + $serial_delimiter)  
+            end
+          end
+        end
       end 
     end 
-    received = incoming.include?("--> receive data info")
+    received = incoming.match(/--> receive data info\[panid = (?<panid>[0-9A-F]{4}), srcid = (?<srcid>[0-9A-F]{4}), dstid = (?<dstid>[0-9A-F]{4}), length = (?<length>[0-9A-F]{2})\]/)
   end
 end
 
