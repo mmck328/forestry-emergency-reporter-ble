@@ -14,12 +14,19 @@ sp.read_timeout=1000
 
 pattern=/GNGGA/
 file=File.open("/dev/ttyACM0")
+INTERVAL = 5
+
+count = 0
 file.each_line do |text|
   if pattern =~ text
-    a=text.split(",")
-    msg=a[1]+","+(a[2].to_f/100.0).to_s+","+(a[4].to_f/100.0).to_s
-    sp.write msg+"#{ $serial_delimiter }"
-    p sp.gets("#{ $serial_delimiter }")
+    if count % INTERVAL == 0
+      a=text.split(",")
+      msg=a[1]+","+(a[2].to_f/100.0).to_s+","+(a[4].to_f/100.0).to_s
+      pktid = count / INTERVAL
+      sp.write pktid.to_s + ":" + msg + $serial_delimiter
+      p sp.gets($serial_delimiter)
+    end
+    count += 1
   end
 end
 
