@@ -28,7 +28,7 @@ p DEVICE_CONF
 
 PAN_ID = DEVICE_CONF['panid']
 DEVICE_ID = DEVICE_CONF['deviceid']
-NEXT_DEVICE_ID = format("%04x", (DEVICE_ID.to_i(base=16) - 1).to_s(16)).upcase
+NEXT_DEVICE_ID = format("%04X", (DEVICE_ID.to_i(base=16) - 1)).upcase
 
 count = 0
 file.each_line do |text|
