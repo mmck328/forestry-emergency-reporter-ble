@@ -10,7 +10,7 @@ $serial_paritycheck = 0
 $serial_delimiter = "\r\n"
 
 sp = SerialPort.new($serial_port, $serial_baudrate, $serial_databit, $serial_stopbit, $serial_paritycheck)
-sp.read_timeout=1000 
+sp.read_timeout=-1 
 
 pattern=/GNGGA/
 file=File.open("/dev/ttyACM0")
@@ -39,10 +39,17 @@ file.each_line do |text|
       a=text.split(",")
       msg=a[1]+","+(a[2].to_f/100.0).to_s+","+(a[4].to_f/100.0).to_s
       pktid = format("%04X", (count / INTERVAL) % 0xffff)
-      sp.write PAN_ID + NEXT_DEVICE_ID + DEVICE_ID + GW_ID + pktid + msg + $serial_delimiter
-      p sp.gets($serial_delimiter)
+      payload = DEVICE_ID + GW_ID + pktid + msg
+      p payload
+      
+      sp.write PAN_ID + NEXT_DEVICE_ID + payload + $serial_delimiter
     end
     count += 1
+  end
+  loop do
+    str = sp.gets($serial_delimiter)
+    break unless str 
+    p str
   end
 end
 
