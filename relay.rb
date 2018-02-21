@@ -5,7 +5,7 @@ require 'fileutils'
 $serial_port = '/dev/ttyUSB0'
 #$serial_port = '/dev/ttyAMA0'
 $serial_baudrate = 115200
-$serial_databit = 8
+serial_databit = 8
 $serial_stopbit = 1
 $serial_paritycheck = 0
 $serial_delimiter = "\r\n"
@@ -33,19 +33,18 @@ while true
         nextid = format("%04X", [dstid.hex - 1, 0].max) 
         rssi = matched[:rssi]
         payload = matched[:payload]
-        
         puts("received payload: " + payload)
-        sp.write(panid + nextid + payload + $serial_delimiter) 
-        if srcid == payload[0..3] # srcid == origin
+        if srcid == payload[0..3] # if src is origin, return rssi to src
+          puts("Return RSSI to origin:#{srcid}")
+          sp.write(panid + srcid + "ACK:-" + matched[:rssi] + "dBm" + $serial_delimiter)  
           response = sp.gets($serial_selimiter)
           if response 
             p response
             file.puts(response)
-            if response.include?("<-- send data info[panid = #{panid}, srcid = #{dstid}, dstid = #{nextid}, length = ")
-              sp.write(panid + srcid + "ACK:-" + matched[:rssi] + "dBm" + $serial_delimiter)  
-            end
           end
         end
+        puts("Relay payload to next node:#{nextid}")
+        sp.write(panid + nextid + payload + $serial_delimiter) 
       end 
     end 
     received = incoming.match(/--> receive data info\[panid = (?<panid>[0-9A-F]{4}), srcid = (?<srcid>[0-9A-F]{4}), dstid = (?<dstid>[0-9A-F]{4}), length = (?<length>[0-9A-F]{2})\]/)
