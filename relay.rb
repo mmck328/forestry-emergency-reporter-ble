@@ -41,6 +41,7 @@ while true
           if response 
             p response
             file.puts(response)
+            sleep(0.2) 
           end
         end
         puts("Relay payload to next node:#{nextid}")
