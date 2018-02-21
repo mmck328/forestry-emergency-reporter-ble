@@ -30,14 +30,16 @@ PAN_ID = DEVICE_CONF['panid']
 DEVICE_ID = DEVICE_CONF['deviceid']
 NEXT_DEVICE_ID = format("%04X", (DEVICE_ID.to_i(base=16) - 1))
 
+GW_ID = '0000'
+
 count = 0
 file.each_line do |text|
   if pattern =~ text
     if count % INTERVAL == 0
       a=text.split(",")
       msg=a[1]+","+(a[2].to_f/100.0).to_s+","+(a[4].to_f/100.0).to_s
-      pktid = count / INTERVAL
-      sp.write PAN_ID + NEXT_DEVICE_ID + pktid.to_s + ":" + msg + $serial_delimiter
+      pktid = format("%04X", (count / INTERVAL) % 0xffff)
+      sp.write PAN_ID + NEXT_DEVICE_ID + DEVICE_ID + GW_ID + pktid + msg + $serial_delimiter
       p sp.gets($serial_delimiter)
     end
     count += 1
