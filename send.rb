@@ -10,7 +10,7 @@ $serial_paritycheck = 0
 $serial_delimiter = "\r\n"
 
 sp = SerialPort.new($serial_port, $serial_baudrate, $serial_databit, $serial_stopbit, $serial_paritycheck)
-sp.read_timeout=-1 
+sp.read_timeout=10 
 
 pattern=/GNGGA/
 file=File.open("/dev/ttyACM0")
@@ -36,8 +36,13 @@ count = 0
 file.each_line do |text|
   if pattern =~ text
     if count % INTERVAL == 0
-      a=text.split(",")
-      msg=a[1]+","+(a[2].to_f/100.0).to_s+","+(a[4].to_f/100.0).to_s
+      a = text.split(',')
+      lath, latm = a[2][0..1].to_i, a[2][2..8].to_f
+      lngh, lngm = a[4][0..2].to_i, a[4][3..9].to_f
+      lat = format("%.6f", lath + latm / 60)
+      lng = format("%.6f", lngh + lngm / 60)
+      msg = a[1] + "," + lat + "," + lng
+      
       pktid = format("%04X", (count / INTERVAL) % 0xffff)
       payload = DEVICE_ID + GW_ID + pktid + msg
       p payload
