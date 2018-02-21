@@ -1,3 +1,4 @@
 capture_log/*
 send_log/*
 relay_log/*
+device.conf
