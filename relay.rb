@@ -1,6 +1,7 @@
 require 'rubygems'
 require 'serialport'
 require 'fileutils'
+require './logger'
 
 $serial_port = '/dev/ttyUSB0'
 #$serial_port = '/dev/ttyAMA0'
@@ -13,7 +14,7 @@ $serial_delimiter = "\r\n"
 sp = SerialPort.new($serial_port, $serial_baudrate, $serial_databit, $serial_stopbit, $serial_paritycheck)
 sp.read_timeout=5000 
 
-logger = new Logger('relay_log')
+logger = Logger.new('relay_log')
 
 received = nil 
 

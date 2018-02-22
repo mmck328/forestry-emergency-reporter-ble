@@ -2,18 +2,22 @@ require 'fileutils'
 require 'time'
 
 class Logger
-  LOG_FILE = nil
-
+  BASE_PATH = './log/'
   def initialize(log_name)
-    FileUtils.makedirs("./log/" + log_name)
-    log_filename = "./log/send_log/" + Time.now().strftime("%Y%m%d-%H%M%S") + ".log" 
-    LOG_FILE = File.open(log_filename, 'a')
-    ObjectSpace.define_finalizer(self, proc { LOG_FILE.close()})
+    logging_file_name = Time.now().strftime("%Y%m%d-%H%M%S") + ".log" 
+    logging_path = File.join(BASE_PATH, log_name, logging_file_name)
+
+    FileUtils.makedirs(File.expand_path('..', logging_path))
+
+    @log_file = File.open(logging_path, 'a')
+    ObjectSpace.define_finalizer(self, proc { @log_file.close()})
+
+    log "logging to #{logging_path}"
   end
   
   def log(x)
     f = "[#{Time.new}] #{x}"
     p f
-    LOG_FILE.puts(f)
+    @log_file.puts(f)
   end
 end

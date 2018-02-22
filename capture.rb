@@ -1,7 +1,7 @@
 require 'rubygems'
 require 'serialport'
 require 'fileutils'
-require 'logger'
+require './logger'
 
 $serial_port = '/dev/ttyUSB0'
 #$serial_port = '/dev/ttyAMA0'
@@ -14,7 +14,7 @@ $serial_delimiter = "\r\n"
 sp = SerialPort.new($serial_port, $serial_baudrate, $serial_databit, $serial_stopbit, $serial_paritycheck)
 sp.read_timeout=1000 
 
-logger = new Logger('capture_log')
+logger = Logger.new('capture_log')
 
 while true
   incoming = sp.gets("#{ $serial_delimiter }")
