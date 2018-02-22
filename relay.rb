@@ -11,27 +11,27 @@ $serial_stopbit = 1
 $serial_paritycheck = 0
 $serial_delimiter = "\r\n"
 
-sp = SerialPort.new($serial_port, $serial_baudrate, $serial_databit, $serial_stopbit, $serial_paritycheck)
-sp.read_timeout=5000 
+$sp = SerialPort.new($serial_port, $serial_baudrate, $serial_databit, $serial_stopbit, $serial_paritycheck)
+$sp.read_timeout=5000 
 
-logger = Logger.new('relay_log')
+$logger = Logger.new('relay_log')
 
 received = nil 
 
 def send_rssi(matched, panid, srcid)
-  logger.log("Return RSSI to origin:#{srcid}")
-  sp.write(panid + srcid + "ACK:-" + matched[:rssi] + "dBm" + $serial_delimiter)  
-  response = sp.gets($serial_selimiter)
+  $logger.log("Return RSSI to origin:#{srcid}")
+  $sp.write(panid + srcid + "ACK:-" + matched[:rssi] + "dBm" + $serial_delimiter)  
+  response = $sp.gets($serial_selimiter)
   if response 
-    logger.log(response)
+    $logger.log(response)
     sleep(0.2) 
   end
 end
 
 while true
-  incoming = sp.gets($serial_delimiter)
+  incoming = $sp.gets($serial_delimiter)
   if incoming
-    logger.log(incoming)
+    $logger.log(incoming)
     if received
       panid = received[:panid]
       srcid = received[:srcid]
@@ -43,13 +43,13 @@ while true
         nextid = format("%04X", [dstid.hex - 1, 0].max) 
         rssi = matched[:rssi]
         payload = matched[:payload]
-        logger.log("received payload: " + payload)
+        $logger.log("received payload: " + payload)
 
         orgid = payload[0..3]
         send_rssi(matched, panid, srcid) if srcid == orgid # for measurement
 
-        logger.log("Relay payload to next node:#{nextid}")
-        sp.write(panid + nextid + payload + $serial_delimiter) 
+        $logger.log("Relay payload to next node:#{nextid}")
+        $sp.write(panid + nextid + payload + $serial_delimiter) 
       end 
     end 
     received = incoming.match(/--> receive data info\[panid = (?<panid>[0-9A-F]{4}), srcid = (?<srcid>[0-9A-F]{4}), dstid = (?<dstid>[0-9A-F]{4}), length = (?<length>[0-9A-F]{2})\]/)
