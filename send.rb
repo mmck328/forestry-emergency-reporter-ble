@@ -1,6 +1,7 @@
 require 'rubygems'
 require 'serialport'
 require './logger'
+require 'thread'
 
 $serial_port = '/dev/ttyUSB0'
 #$serial_port = '/dev/ttyAMA0'
@@ -10,8 +11,8 @@ $serial_stopbit = 1
 $serial_paritycheck = 0
 $serial_delimiter = "\r\n"
 
-sp = SerialPort.new($serial_port, $serial_baudrate, $serial_databit, $serial_stopbit, $serial_paritycheck)
-sp.read_timeout=10 
+$sp = SerialPort.new($serial_port, $serial_baudrate, $serial_databit, $serial_stopbit, $serial_paritycheck)
+$sp.read_timeout=100
 
 DEVICE_CONF = {} #deviceid
 File.foreach('device.conf') do |text|
@@ -28,9 +29,9 @@ GW_ID = '0000'
 
 GPS_PATTERN=/GNGGA/
 GPS=File.open("/dev/ttyACM0")
-SEND_INTERVAL = 10 #sec
+SEND_INTERVAL = 5 #sec
 
-logger = Logger.new('send_log')
+$logger = Logger.new('send_log')
 
 def format_gps(text)
   a = text.split(',')
@@ -41,28 +42,50 @@ def format_gps(text)
   msg = a[1] + "," + lat + "," + lng
 end
 
-last_sent_time = Time.now - 100000
+def send(msg, count)
+  msg ||= 'no GPS data is found'
+  pktid = format("%04X", count % 0xffff)
+  payload = DEVICE_ID + GW_ID + pktid + msg
+  $logger.log "payload: #{payload}"
+  
+  $sp.write PAN_ID + NEXT_DEVICE_ID + payload + $serial_delimiter
+end
+
 count = 0
-GPS.each_line do |text|
-  if GPS_PATTERN =~ text
-    if Time.now - last_sent_time > SEND_INTERVAL
-      msg = format_gps(text)
-      pktid = format("%04X", count % 0xffff)
+recent_gps_data = 'initialize'
+threads = []
+semaphore = Mutex.new
 
-      payload = DEVICE_ID + GW_ID + pktid + msg
-
-      logger.log payload
-      sp.write PAN_ID + NEXT_DEVICE_ID + payload + $serial_delimiter
-
-      last_sent_time = Time.now
-      count += 1
+threads << Thread.new do
+  GPS.each_line do |text|
+    if GPS_PATTERN =~ text
+      semaphore.synchronize do
+        recent_gps_data = format_gps(text)
+      end
     end
-  end
-  loop do
-    str = sp.gets($serial_delimiter)
-    break unless str 
-    logger.log str
   end
 end
 
-sp.close
+threads << Thread.new do
+  loop do
+    msg = nil
+    semaphore.synchronize do
+      msg = recent_gps_data
+      recent_gps_data = nil
+    end
+    send(msg, count)
+
+    count += 1
+    sleep SEND_INTERVAL
+  end
+end
+
+threads << Thread.new do
+  loop do
+    str = $sp.gets($serial_delimiter)
+    $logger.log "lora chip says: #{str}" if str
+  end
+end
+
+threads.each { |thr| thr.join}
+$sp.close
