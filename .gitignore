@@ -1,5 +1,9 @@
-capture_log/*
-send_log/*
-relay_log/*
-log/*
-device.conf
+/capture_log/*
+/send_log/*
+/relay_log/*
+/log/*
+/device.conf
+
+/.bundle
+vendor/bundle
+
