@@ -13,8 +13,8 @@ $serial_delimiter = "\r\n"
 sp = SerialPort.new($serial_port, $serial_baudrate, $serial_databit, $serial_stopbit, $serial_paritycheck)
 sp.read_timeout=1000 
 
-FileUtils.makedirs("./capture_log")
-filename = "./capture_log/" + Time.now().strftime("%Y%m%d-%H%M%S") + ".txt" 
+FileUtils.makedirs("./log/capture_log")
+filename = "./log/capture_log/" + Time.now().strftime("%Y%m%d-%H%M%S") + ".txt" 
 file = File.open(filename, 'a')
 while true
   incoming = sp.gets("#{ $serial_delimiter }")
