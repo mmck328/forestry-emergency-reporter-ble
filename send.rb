@@ -21,17 +21,17 @@ File.foreach('device.conf') do |text|
 end
 p DEVICE_CONF
 
-GPS_PATTERN=/GNGGA/
-GPS=File.open("/dev/ttyACM0")
-INTERVAL = 5
-
 PAN_ID = DEVICE_CONF['panid']
 DEVICE_ID = DEVICE_CONF['deviceid']
 NEXT_DEVICE_ID = format("%04X", (DEVICE_ID.to_i(base=16) - 1))
 GW_ID = '0000'
 
-FileUtils.makedirs("./send_log")
-LOG_FILENAME = "./send_log/" + Time.now().strftime("%Y%m%d-%H%M%S") + ".txt" 
+GPS_PATTERN=/GNGGA/
+GPS=File.open("/dev/ttyACM0")
+INTERVAL = 5
+
+FileUtils.makedirs("./log/send_log")
+LOG_FILENAME = "./log/send_log/" + Time.now().strftime("%Y%m%d-%H%M%S") + ".log" 
 LOG_FILE = File.open(LOG_FILENAME, 'a')
 
 def log(text)
