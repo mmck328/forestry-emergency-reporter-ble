@@ -13,23 +13,16 @@ $serial_delimiter = "\r\n"
 sp = SerialPort.new($serial_port, $serial_baudrate, $serial_databit, $serial_stopbit, $serial_paritycheck)
 sp.read_timeout=5000 
 
-FileUtils.makedirs("./log/relay_log")
-filename = "./log/relay_log/" + Time.now().strftime("%Y%m%d-%H%M%S") + ".log"
-file = File.open(filename, 'a')
+logger = new Logger('relay_log')
 
 received = nil 
 
-def log(text)
-  p text
-  file.puts(text)
-end
-
 def send_rssi(matched, panid, srcid)
-  log("Return RSSI to origin:#{srcid}")
+  logger.log("Return RSSI to origin:#{srcid}")
   sp.write(panid + srcid + "ACK:-" + matched[:rssi] + "dBm" + $serial_delimiter)  
   response = sp.gets($serial_selimiter)
   if response 
-    log(response)
+    logger.log(response)
     sleep(0.2) 
   end
 end
@@ -37,7 +30,7 @@ end
 while true
   incoming = sp.gets($serial_delimiter)
   if incoming
-    log(incoming)
+    logger.log(incoming)
     if received
       panid = received[:panid]
       srcid = received[:srcid]
@@ -49,12 +42,12 @@ while true
         nextid = format("%04X", [dstid.hex - 1, 0].max) 
         rssi = matched[:rssi]
         payload = matched[:payload]
-        log("received payload: " + payload)
+        logger.log("received payload: " + payload)
 
         orgid = payload[0..3]
         send_rssi(matched, panid, srcid) if srcid == orgid # for measurement
 
-        log("Relay payload to next node:#{nextid}")
+        logger.log("Relay payload to next node:#{nextid}")
         sp.write(panid + nextid + payload + $serial_delimiter) 
       end 
     end 

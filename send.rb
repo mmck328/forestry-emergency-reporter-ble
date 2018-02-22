@@ -1,6 +1,6 @@
 require 'rubygems'
 require 'serialport'
-require 'fileutils'
+require 'logger'
 
 $serial_port = '/dev/ttyUSB0'
 #$serial_port = '/dev/ttyAMA0'
@@ -30,14 +30,7 @@ GPS_PATTERN=/GNGGA/
 GPS=File.open("/dev/ttyACM0")
 INTERVAL = 5
 
-FileUtils.makedirs("./log/send_log")
-LOG_FILENAME = "./log/send_log/" + Time.now().strftime("%Y%m%d-%H%M%S") + ".log" 
-LOG_FILE = File.open(LOG_FILENAME, 'a')
-
-def log(text)
-  p text
-  LOG_FILE.puts(text)
-end
+logger = new Logger('send_log')
 
 def format_gps(text)
   a = text.split(',')
@@ -57,7 +50,7 @@ GPS.each_line do |text|
 
       payload = DEVICE_ID + GW_ID + pktid + msg
 
-      log payload
+      logger.log payload
       sp.write PAN_ID + NEXT_DEVICE_ID + payload + $serial_delimiter
     end
     count += 1
@@ -65,7 +58,7 @@ GPS.each_line do |text|
   loop do
     str = sp.gets($serial_delimiter)
     break unless str 
-    log str
+    logger.log str
   end
 end
 
