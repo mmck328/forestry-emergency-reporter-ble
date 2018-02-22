@@ -2,7 +2,7 @@ require 'fileutils'
 require 'time'
 
 class Logger
-  BASE_PATH = './log/'
+  BASE_PATH = __dir__ + '/log/'
   def initialize(log_name)
     logging_file_name = Time.now().strftime("%Y%m%d-%H%M%S") + ".log" 
     logging_path = File.join(BASE_PATH, log_name, logging_file_name)

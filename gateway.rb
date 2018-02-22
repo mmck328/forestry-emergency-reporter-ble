@@ -1,7 +1,7 @@
 require 'rubygems'
 require 'serialport'
 require 'socket.io-client-simple'
-require './logger'
+require_relative './logger'
 
 $sp = SerialPort.new('/dev/ttyUSB0', 115200, 8, 1, 0)
 $sp.read_timeout = 1000

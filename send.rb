@@ -1,6 +1,6 @@
 require 'rubygems'
 require 'serialport'
-require './logger'
+require_relative './logger'
 require 'thread'
 
 $serial_port = '/dev/ttyUSB0'

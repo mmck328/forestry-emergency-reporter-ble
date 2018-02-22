@@ -1,7 +1,7 @@
 require 'rubygems'
 require 'serialport'
 require 'fileutils'
-require './logger'
+require_relative './logger'
 
 $serial_port = '/dev/ttyUSB0'
 #$serial_port = '/dev/ttyAMA0'
