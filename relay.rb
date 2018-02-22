@@ -17,6 +17,7 @@ $sp.read_timeout=5000
 $logger = Logger.new('relay_log')
 
 received = nil 
+return_rssi = true
 
 def send_rssi(matched, panid, srcid)
   $logger.log("Return RSSI to origin:#{srcid}")
@@ -45,11 +46,19 @@ while true
         payload = matched[:payload]
         $logger.log("received payload: " + payload)
 
-        orgid = payload[0..3]
-        send_rssi(matched, panid, srcid) if srcid == orgid # for measurement
+        if payload.include?("RSSI OFF")
+          return_rssi = false
+        elsif payload.include?("RSSI ON")
+	  return_rssi = true
+	else
+          orgid = payload[0..3]
+          if srcid == orgid && return_rssi # for measurement
+            send_rssi(matched, panid, srcid)
+          end
 
-        $logger.log("Relay payload to next node:#{nextid}")
-        $sp.write(panid + nextid + payload + $serial_delimiter) 
+          $logger.log("Relay payload to next node:#{nextid}")
+          $sp.write(panid + nextid + payload + $serial_delimiter) 
+        end
       end 
     end 
     received = incoming.match(/--> receive data info\[panid = (?<panid>[0-9A-F]{4}), srcid = (?<srcid>[0-9A-F]{4}), dstid = (?<dstid>[0-9A-F]{4}), length = (?<length>[0-9A-F]{2})\]/)
