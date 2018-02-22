@@ -29,7 +29,7 @@ GW_ID = '0000'
 
 GPS_PATTERN=/GNGGA/
 GPS=File.open("/dev/ttyACM0")
-SEND_INTERVAL = 5 #sec
+SEND_INTERVAL = 10 #sec
 
 $logger = Logger.new('send_log')
 
