@@ -16,7 +16,8 @@ class Logger
   end
   
   def log(x)
-    f = "[#{Time.new}] #{x}"
+    t = Time.new.strftime("%F %T.%L")
+    f = "[#{t}] #{x}"
     p f
     @log_file.puts(f)
   end

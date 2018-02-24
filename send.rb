@@ -83,7 +83,7 @@ end
 threads << Thread.new do
   loop do
     str = $sp.gets($serial_delimiter)
-    $logger.log "lora chip says: #{str}" if str
+    $logger.log "#{str}" if str
   end
 end
 
