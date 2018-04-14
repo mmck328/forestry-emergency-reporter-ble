@@ -1,3 +1,3 @@
-# lora-multihopping
+# forestry-emergency-reporter-ble
 
-Simple Multihop Network using LoRa Private
+Bidirectional BLE-LoRa gateway for forestry-emergency-reporter
