@@ -1,70 +1,63 @@
 var bleno = require ('bleno');
+var readline = require ('readline');
 var rl = readline.createInterface({
   input:  process.stdin,
   output: process.stdout
 });
 
-var fromLoRaPayload = '';
-var toLoRaPayload = '';
 
-var updateToLoRaCallback = null;
+var updateFromLoRaCallback = null;
 
-rl.on('line', (line) => {
-  fromLoRaPayload = line.trim();
-});
-
-var PrimaryService = bleno.PrimaryService;
-var Characteristic = bleno.Characteristic;
-
-console.log('ble-lora service');
-
-var loraServiceUUID = '17CF6671-7A8C-4DDD-9547-4BFA6D3F1C49'
-
-
-var fromLoRaCharacteristic = new Characteristic({
-  uuid: '7F5D2112-0B9F-4188-9C4D-6AC4C161EC81',
-  properties: ['read', 'notify'],
-  value: new Buffer(0),
+var stringCharacteristic = new bleno.Characteristic({
+  uuid: '2a3d', // String Characteristic
+  properties: ['write', 'notify'],
+  descriptors: [
+    new bleno.Descriptor({
+      uuid: '2901', // Characteristic User Description
+      value: 'Send/Receive data to/from LoRa'
+    })
+  ],
+  onWriteRequest: (data, offset, withoutResponse, callback) => {
+    console.log('[From BLE] ' + data.toString());
+    callback(this.RESULT_SUCCESS)
+  },
   onSubscribe: (maxValueSize, updateValueCallback) => {
     console.log('subscribed');
-    updateValueCallback(this.value);
+    updateFromLoRaCallback = updateValueCallback;
   },
   onUnsubscribe: () => {
     console.log('unsubscribed');
+    updateFromLoRaCallback = null;
   }
 });
 
-var toLoRaCharacteristic
+rl.on('line', (line) => {
+  if (updateFromLoRaCallback) {
+    updateFromLoRaCallback(new Buffer(line.trim()));
+  }
+});
 
-var loraService = new PrimaryService({
+var loraServiceUUID = '17CF6671-7A8C-4DDD-9547-4BFA6D3F1C49'
+
+var loraService = new bleno.PrimaryService({
   uuid: loraServiceUUID,
-  characteristics: [
-    fromLoRaCharacteristic,
-    toLoRaCharacteristic
-  ]
+  characteristics: [stringCharacteristic]
 });
 
 bleno.on('stateChange', function(state) {
-  console.log('on -> stateChange: ' + state);
+  console.log('stateChange: ' + state);
 
   if (state === 'poweredOn') {
-    bleno.startAdvertising('BLE-LoRa Gateway', ['ec00']);
+    bleno.startAdvertising('BLE-LoRa Gateway', [loraServiceUUID]);
   } else {
     bleno.stopAdvertising();
   } 
 });
 
 bleno.on('advertisingStart', function(error) {
-  console.log('on -> advertisingStart: ' + (error ? 'error ' + error : 'success'));
+  console.log('advertisingStart: ' + (error ? 'error ' + error : 'success'));
 
   if (!error) {
-    bleno.setServices([
-      new BlenoPrimaryService({
-        uuid: 'ec00',
-        characteristics: [
-          new EchoCharacteristic()
-        ]
-      })
-    ]);
+    bleno.setServices([loraService]);
   }
 });
