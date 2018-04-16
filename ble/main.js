@@ -9,18 +9,18 @@ var rl = readline.createInterface({
 var updateFromLoRaCallback = null;
 
 var stringCharacteristic = new bleno.Characteristic({
-  uuid: '2a3d', // String Characteristic
-  properties: ['write', 'notify'],
+  uuid: '7F5D2112-0B9F-4188-9C4D-6AC4C161EC81', // String Characteristic
+  properties: ['notify'],
   descriptors: [
     new bleno.Descriptor({
       uuid: '2901', // Characteristic User Description
-      value: 'Send/Receive data to/from LoRa'
+      value: 'Received data from LoRa'
+    }),
+    new bleno.Descriptor({
+      uuid: '2904', // Characteristic Presentation Format
+      value: new Buffer([25, 0x00, 0x27, 0x00, 1, 0x00, 0x00])
     })
   ],
-  onWriteRequest: (data, offset, withoutResponse, callback) => {
-    console.log('[From BLE] ' + data.toString());
-    callback(this.RESULT_SUCCESS)
-  },
   onSubscribe: (maxValueSize, updateValueCallback) => {
     console.log('subscribed');
     updateFromLoRaCallback = updateValueCallback;
@@ -29,6 +29,25 @@ var stringCharacteristic = new bleno.Characteristic({
     console.log('unsubscribed');
     updateFromLoRaCallback = null;
   }
+});
+
+var stringCharacteristic2 = new bleno.Characteristic({
+  uuid: '3D161CC8-CFE4-4948-B582-672386BB41AB', // String Characteristic
+  properties: ['write'],
+  descriptors: [
+    new bleno.Descriptor({
+      uuid: '2901', // Characteristic User Description
+      value: 'Prepared data to send to LoRa'
+    }),
+    new bleno.Descriptor({
+      uuid: '2904', // Characteristic Presentation Format
+      value: new Buffer([25, 0x00, 0x27, 0x00, 1, 0x00, 0x00])
+    })
+  ],
+  onWriteRequest: (data, offset, withoutResponse, callback) => {
+    console.log('[From BLE] ' + data.toString());
+    callback(this.RESULT_SUCCESS)
+  },
 });
 
 rl.on('line', (line) => {
@@ -41,7 +60,7 @@ var loraServiceUUID = '17CF6671-7A8C-4DDD-9547-4BFA6D3F1C49'
 
 var loraService = new bleno.PrimaryService({
   uuid: loraServiceUUID,
-  characteristics: [stringCharacteristic]
+  characteristics: [stringCharacteristic, stringCharacteristic2]
 });
 
 bleno.on('stateChange', function(state) {
