@@ -9,7 +9,7 @@ var rl = readline.createInterface({
 var updateFromLoRaCallback = null;
 
 var stringCharacteristic = new bleno.Characteristic({
-  uuid: '7F5D2112-0B9F-4188-9C4D-6AC4C161EC81', // String Characteristic
+  uuid: '7F5D2112-0B9F-4188-9C4D-6AC4C161EC81', // Received Characteristic
   properties: ['notify'],
   descriptors: [
     new bleno.Descriptor({
@@ -32,7 +32,7 @@ var stringCharacteristic = new bleno.Characteristic({
 });
 
 var stringCharacteristic2 = new bleno.Characteristic({
-  uuid: '3D161CC8-CFE4-4948-B582-672386BB41AB', // String Characteristic
+  uuid: '3D161CC8-CFE4-4948-B582-672386BB41AB', // Send Characteristic
   properties: ['write'],
   descriptors: [
     new bleno.Descriptor({
