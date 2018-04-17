@@ -2,6 +2,7 @@ require 'rubygems'
 require 'serialport'
 require_relative './logger'
 require 'thread'
+require 'open3'
 
 $serial_port = '/dev/ttyUSB0'
 #$serial_port = '/dev/ttyAMA0'
@@ -28,18 +29,19 @@ GW_ID = '0000'
 
 $logger = Logger.new('ble-lora_log')
 
-def send(msg, count)
-  pkttype = '0' # direction to cloud
-  payload = pkttype + msg
+def send(payload, count)
   $logger.log "payload: #{payload}"
-  
   $sp.write PAN_ID + GW_ID + payload + $serial_delimiter
 end
 
 threads = []
 mutex = Mutex.new
 
-threads << Thread.new do  
+ble_in, ble_out, ble_err, ble_waitthr = Open3.popen3('node ble/main.js')
+
+threads << ble_waitthr
+
+threads << Thread.new do # receive from LoRa
   loop do
     incoming = $sp.gets($serial_delimiter)
     if incoming
@@ -56,6 +58,7 @@ threads << Thread.new do
           $logger.log("received payload: " + payload)
 
           $logger.log("Relay payload to smartphone")
+          ble_in.puts(payload)
           # BLEでスマホに送信
         end 
       end 
@@ -64,7 +67,8 @@ threads << Thread.new do
   end
 end
 
-threads << Thread.new do
+threads << Thread.new do # send to LoRa
+  msg = ble_out.gets
   loop do
     send(msg)
   end
