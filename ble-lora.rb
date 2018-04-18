@@ -16,7 +16,7 @@ $sp = SerialPort.new($serial_port, $serial_baudrate, $serial_databit, $serial_st
 $sp.read_timeout=100
 
 DEVICE_CONF = {} #deviceid
-File.foreach('device.conf') do |text|
+File.foreach(__dir__ + '/device.conf') do |text|
     key = text.split('=')[0]
     val = text.split('=')[1].chomp
     DEVICE_CONF[key] = val
@@ -29,7 +29,7 @@ GW_ID = '0000'
 
 $logger = Logger.new('ble-lora_log')
 
-def send(payload, count)
+def send(payload)
   $logger.log "payload: #{payload}"
   $sp.write PAN_ID + GW_ID + payload + $serial_delimiter
 end
@@ -37,7 +37,7 @@ end
 threads = []
 mutex = Mutex.new
 
-ble_in, ble_out, ble_err, ble_waitthr = Open3.popen3('node ble/main.js')
+ble_in, ble_out, ble_err, ble_waitthr = Open3.popen3('/usr/local/bin/node ' + __dir__ + '/ble/main.js')
 
 threads << ble_waitthr
 
@@ -68,9 +68,12 @@ threads << Thread.new do # receive from LoRa
 end
 
 threads << Thread.new do # send to LoRa
-  msg = ble_out.gets
   loop do
-    send(msg)
+    msg = ble_out.gets.chomp
+    $logger.log '<bleno> ' + msg
+    if msg.length > 11 && msg[0..10] == '[From BLE] '
+      send(msg[11..-1])
+    end
   end
 end
 
