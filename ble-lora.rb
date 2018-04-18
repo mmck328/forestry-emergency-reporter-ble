@@ -13,7 +13,7 @@ $serial_paritycheck = 0
 $serial_delimiter = "\r\n"
 
 $sp = SerialPort.new($serial_port, $serial_baudrate, $serial_databit, $serial_stopbit, $serial_paritycheck)
-$sp.read_timeout=100
+$sp.read_timeout=5000
 
 DEVICE_CONF = {} #deviceid
 File.foreach(__dir__ + '/device.conf') do |text|
@@ -42,6 +42,7 @@ ble_in, ble_out, ble_err, ble_waitthr = Open3.popen3('/usr/local/bin/node ' + __
 threads << ble_waitthr
 
 threads << Thread.new do # receive from LoRa
+  received = nil
   loop do
     incoming = $sp.gets($serial_delimiter)
     if incoming
@@ -68,11 +69,20 @@ threads << Thread.new do # receive from LoRa
 end
 
 threads << Thread.new do # send to LoRa
+  send_thr = nil
   loop do
     msg = ble_out.gets.chomp
     $logger.log '<bleno> ' + msg
     if msg.length > 11 && msg[0..10] == '[From BLE] '
-      send(msg[11..-1])
+      if send_thr
+        send_thr.kill
+      end
+      send_thr = Thread.new do
+      	timestamp = msg[34..-1]
+        delay = (DEVICE_ID.hex * 10 * 1000 - msg[34..-1].to_i) % (60 * 1000)        
+        sleep(delay / 1000.0)
+        send(msg[11..-1])
+      end
     end
   end
 end
