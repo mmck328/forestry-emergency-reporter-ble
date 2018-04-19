@@ -59,7 +59,11 @@ threads << Thread.new do # receive from LoRa
           $logger.log("received payload: " + payload)
 
           $logger.log("Relay payload to smartphone")
-          ble_in.puts(payload)
+
+          # for demo!
+          ble_in.puts(payload[0..3] + payload[8..12] + payload[18..-1])
+          
+          
           # BLEでスマホに送信
         end 
       end 
