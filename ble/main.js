@@ -80,7 +80,7 @@ var sendCharacteristic = new bleno.Characteristic({
 });
 
 rl.on('line', (line) => {
-  received = line;
+  received = line.trim();
   if (updateFromLoRaCallback) {
     updateFromLoRaCallback(new Buffer([1]));
   }
