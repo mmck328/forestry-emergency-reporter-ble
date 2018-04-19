@@ -8,7 +8,7 @@ var rl = readline.createInterface({
 
 var updateFromLoRaCallback = null;
 
-var receivedNotificationCharacterictic = new bleno.Characteristic({
+var receivedNotificationCharacteristic = new bleno.Characteristic({
   uuid: '7F5D2112-0B9F-4188-9C4D-6AC4C161EC81', // Received Notification Characteristic
   properties: ['notify'],
   descriptors: [
@@ -33,7 +33,7 @@ var receivedNotificationCharacterictic = new bleno.Characteristic({
 
 var received = '';
 
-var receivedCharacterictic = new bleno.Characteristic({
+var receivedCharacteristic = new bleno.Characteristic({
   uuid: '060CCB44-9F41-43E7-8BE2-C711631D56E2', // Received Characteristic
   properties: ['read'],
   descriptors: [
@@ -90,7 +90,7 @@ var loraServiceUUID = '17CF6671-7A8C-4DDD-9547-4BFA6D3F1C49'
 
 var loraService = new bleno.PrimaryService({
   uuid: loraServiceUUID,
-  characteristics: [receivedNotificationCharacterictic, receivedCharacterictic, sendCharacteristic]
+  characteristics: [receivedNotificationCharacteristic, receivedCharacteristic, sendCharacteristic]
 });
 
 bleno.on('stateChange', function(state) {
