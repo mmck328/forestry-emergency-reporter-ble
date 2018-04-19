@@ -8,13 +8,13 @@ var rl = readline.createInterface({
 
 var updateFromLoRaCallback = null;
 
-var stringCharacteristic = new bleno.Characteristic({
-  uuid: '7F5D2112-0B9F-4188-9C4D-6AC4C161EC81', // Received Characteristic
+var receivedNotificationCharacterictic = new bleno.Characteristic({
+  uuid: '7F5D2112-0B9F-4188-9C4D-6AC4C161EC81', // Received Notification Characteristic
   properties: ['notify'],
   descriptors: [
     new bleno.Descriptor({
       uuid: '2901', // Characteristic User Description
-      value: 'Received data from LoRa'
+      value: 'Notification when data received from LoRa'
     }),
     new bleno.Descriptor({
       uuid: '2904', // Characteristic Presentation Format
@@ -31,7 +31,36 @@ var stringCharacteristic = new bleno.Characteristic({
   }
 });
 
-var stringCharacteristic2 = new bleno.Characteristic({
+var received = '';
+
+var receivedCharacterictic = new bleno.Characteristic({
+  uuid: '060CCB44-9F41-43E7-8BE2-C711631D56E2', // Received Characteristic
+  properties: ['read'],
+  descriptors: [
+    new bleno.Descriptor({
+      uuid: '2901', // Characteristic User Description
+      value: 'Received data from LoRa'
+    }),
+    new bleno.Descriptor({
+      uuid: '2904', // Characteristic Presentation Format
+      value: new Buffer([25, 0x00, 0x27, 0x00, 1, 0x00, 0x00])
+    })
+  ],
+  onReadRequest: (offset, callback) => {
+    let result;
+    let data = new Buffer(received);
+    if (offset > data.length) {
+      result = this.RESULT_INVALID_OFFSET;
+      data = null;
+    } else {
+      result = this.RESULT_SUCCESS;
+      data = data.slice(offset);  
+    }
+    callback(result, data);
+  }
+});
+
+var sendCharacteristic = new bleno.Characteristic({
   uuid: '3D161CC8-CFE4-4948-B582-672386BB41AB', // Send Characteristic
   properties: ['write'],
   descriptors: [
@@ -47,12 +76,13 @@ var stringCharacteristic2 = new bleno.Characteristic({
   onWriteRequest: (data, offset, withoutResponse, callback) => {
     console.log('[From BLE] ' + data.toString());
     callback(this.RESULT_SUCCESS)
-  },
+  }
 });
 
 rl.on('line', (line) => {
+  received = line;
   if (updateFromLoRaCallback) {
-    updateFromLoRaCallback(new Buffer(line.trim()));
+    updateFromLoRaCallback(new Buffer([1]));
   }
 });
 
@@ -60,7 +90,7 @@ var loraServiceUUID = '17CF6671-7A8C-4DDD-9547-4BFA6D3F1C49'
 
 var loraService = new bleno.PrimaryService({
   uuid: loraServiceUUID,
-  characteristics: [stringCharacteristic, stringCharacteristic2]
+  characteristics: [receivedNotificationCharacterictic, receivedCharacterictic, sendCharacteristic]
 });
 
 bleno.on('stateChange', function(state) {
